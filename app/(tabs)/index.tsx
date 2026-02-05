@@ -1,9 +1,9 @@
+import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/lib/supabase';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View, Image, Modal } from 'react-native';
-import { useTheme } from '@/contexts/ThemeContext';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { ActivityIndicator, Image, Modal, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import '../global.css';
 
 export default function HomeScreen() {
@@ -66,22 +66,22 @@ export default function HomeScreen() {
         {/* Header */}
         <View style={[styles.header, { backgroundColor: theme.cardBackground }]}>
           <View style={styles.headerTop}>
-            <Text style={[styles.brandText, { color: theme.secondaryText }]}>BOOKSAW</Text>
-            <TouchableOpacity 
-              onPress={() => setMenuVisible(true)}
-              style={styles.avatarButton}
-            >
-              {profilePic ? (
-                <Image source={{ uri: profilePic }} style={styles.avatar} />
-              ) : (
-                <View style={[styles.avatarPlaceholder, { backgroundColor: theme.accent }]}>
-                  <Text style={styles.avatarText}>{initials}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
+            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text style={[styles.greeting, { color: theme.secondaryText }]}>{randomGreeting} {firstName}</Text>
+              <TouchableOpacity 
+                onPress={() => setMenuVisible(true)}
+                style={styles.avatarButton}
+              >
+                {profilePic ? (
+                  <Image source={{ uri: profilePic }} style={styles.avatar} />
+                ) : (
+                  <View style={[styles.avatarPlaceholder, { backgroundColor: theme.accent }]}> 
+                    <Text style={styles.avatarText}>{initials}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
-          
-          <Text style={[styles.greeting, { color: theme.secondaryText }]}>{randomGreeting} {firstName}</Text>
         </View>
 
         {/* Current Book Section */}
@@ -138,16 +138,33 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Book Club Section */}
-        <View style={[styles.section, { backgroundColor: theme.background }]}>
-          <View style={[styles.communityCard, { backgroundColor: theme.accent }]}>
-            <Text style={[styles.communityTitle, { color: theme.cardBackground }]}>Join Our Community</Text>
-            <Text style={[styles.communityDescription, { color: theme.tertiaryText }]}>
-              Connect with fellow readers, share reviews, and discover your next favorite book together.
+          {/* Book Club Section removed for now. Styling preserved below for later reuse. */}
+          {/*
+          <View style={[styles.section, { backgroundColor: theme.background }]}>
+            <View style={[styles.communityCard, { backgroundColor: theme.accent }]}>
+              <Text style={[styles.communityTitle, { color: theme.cardBackground }]}>Join Our Community</Text>
+              <Text style={[styles.communityDescription, { color: theme.tertiaryText }]}>
+                Connect with fellow readers, share reviews, and discover your next favorite book together.
+              </Text>
+              <TouchableOpacity style={[styles.communityButton, { backgroundColor: theme.cardBackground }]}>
+                <Text style={[styles.communityButtonText, { color: theme.accentDark }]}>GET STARTED</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          */}
+        {/* Quote of the Day Section */}
+        <View style={[styles.section, { backgroundColor: theme.background }]}> 
+          <View style={[styles.communityCard, { backgroundColor: theme.accent }]}> 
+            <Text style={[styles.communityTitle, { color: theme.cardBackground }]}>Quote of the Day</Text>
+            <Text style={[styles.communityDescription, { color: theme.tertiaryText }]}> 
+              "It is only with the heart that one can see rightly; what is essential is invisible to the eye."
             </Text>
-            <TouchableOpacity style={[styles.communityButton, { backgroundColor: theme.cardBackground }]}>
-              <Text style={[styles.communityButtonText, { color: theme.accentDark }]}>GET STARTED</Text>
-            </TouchableOpacity>
+            <Text style={{ color: theme.cardBackground, fontWeight: '600', marginBottom: 8 }}>
+              — The Little Prince
+            </Text>
+            <Text style={{ color: theme.cardBackground, fontStyle: 'italic', fontSize: 12 }}>
+              Antoine de Saint-Exupéry
+            </Text>
           </View>
         </View>
       </ScrollView>
@@ -232,8 +249,8 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 32,
+    paddingTop: 40,
+    paddingBottom: 8,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
     shadowColor: '#000',
@@ -245,8 +262,8 @@ const styles = StyleSheet.create({
   headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 24,
+    justifyContent: 'flex-start',
+    marginBottom: 0,
   },
   brandText: {
     fontSize: 11,
