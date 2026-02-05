@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View, Image, Modal } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import '../global.css';
 
 export default function HomeScreen() {
@@ -44,12 +45,19 @@ export default function HomeScreen() {
     );
   }
 
-  const userName = user?.user_metadata?.full_name || 
+  const fullName = user?.user_metadata?.full_name || 
                    user?.email?.split('@')[0] || 
                    'Reader';
   
+  // Get first name only
+  const firstName = fullName.split(' ')[0];
+  
+  // Random greeting in different languages
+  const greetings = ['Hi', 'Hello', 'Ciao', 'Hola', 'Bonjour', 'Hej', 'Olá', 'Hallo', 'Привет', 'こんにちは'];
+  const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
+  
   const profilePic = user?.user_metadata?.avatar_url;
-  const initials = getInitials(userName);
+  const initials = getInitials(fullName);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -73,22 +81,23 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
           
-          <Text style={[styles.greeting, { color: theme.primaryText }]}>Hi {userName}</Text>
-          <Text style={[styles.subtitle, { color: theme.secondaryText }]}>Welcome to your reading sanctuary</Text>
+          <Text style={[styles.greeting, { color: theme.secondaryText }]}>{randomGreeting} {firstName}</Text>
         </View>
 
-        {/* Featured Section */}
+        {/* Current Book Section */}
         <View style={[styles.section, { backgroundColor: theme.background }]}>
           <Text style={[styles.sectionLabel, { color: theme.secondaryText }]}>CURRENT BOOK</Text>
           
           <View style={[styles.featuredCard, { backgroundColor: theme.cardBackground, borderColor: theme.border }]}>
-            <Text style={[styles.featuredTitle, { color: theme.primaryText }]}>Life Of The Wild</Text>
-            <Text style={[styles.featuredDescription, { color: theme.secondaryText }]}>
-              Discover the beauty of nature through captivating stories and stunning illustrations. A journey into the heart of wilderness awaits.
-            </Text>
-            <TouchableOpacity style={[styles.readMoreButton, { borderColor: theme.accent }]}>
-              <Text style={[styles.readMoreText, { color: theme.accentDark }]}>View →</Text>
-            </TouchableOpacity>
+            <View style={styles.currentBookContent}>
+              <View style={styles.currentBookText}>
+                <Text style={[styles.featuredTitle, { color: theme.primaryText }]}>Life Of The Wild</Text>
+                <Text style={[styles.featuredAuthor, { color: theme.secondaryText }]}>by Samuel Handy</Text>
+              </View>
+              <TouchableOpacity style={styles.arrowButton}>
+                <FontAwesome name="chevron-right" size={16} color={theme.accent} />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
@@ -165,7 +174,7 @@ export default function HomeScreen() {
                 </View>
               )}
               <View style={styles.menuUserInfo}>
-                <Text style={[styles.menuUserName, { color: theme.primaryText }]}>{userName}</Text>
+                <Text style={[styles.menuUserName, { color: theme.primaryText }]}>{fullName}</Text>
                 <Text style={[styles.menuUserEmail, { color: theme.secondaryText }]}>{user?.email}</Text>
               </View>
             </View>
@@ -263,20 +272,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarText: {
-    fontSize: 14,
+    fontSize: 18,
     color: '#FFFFFF',
     fontWeight: '600',
   },
   greeting: {
-    fontSize: 36,
-    fontFamily: 'Georgia',
-    color: '#5C4A3D',
-    marginBottom: 8,
-    fontWeight: '400',
-  },
-  subtitle: {
     fontSize: 15,
-    color: '#8B7355',
+    fontWeight: '400',
   },
   section: {
     paddingHorizontal: 24,
@@ -291,7 +293,7 @@ const styles = StyleSheet.create({
   },
   featuredCard: {
     borderRadius: 16,
-    padding: 24,
+    padding: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -299,32 +301,31 @@ const styles = StyleSheet.create({
     elevation: 4,
     borderWidth: 1,
   },
+  currentBookContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  currentBookText: {
+    flex: 1,
+    marginRight: 12,
+  },
   featuredTitle: {
     fontSize: 28,
     fontFamily: 'Georgia',
     color: '#5C4A3D',
-    marginBottom: 12,
+    marginBottom: 4,
     fontWeight: '400',
   },
-  featuredDescription: {
+  featuredAuthor: {
     fontSize: 14,
     color: '#8B7355',
-    lineHeight: 22,
-    marginBottom: 16,
+    fontWeight: '400',
   },
-  readMoreButton: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: '#8B7355',
-    borderRadius: 8,
-  },
-  readMoreText: {
-    fontSize: 10,
-    color: '#5C4A3D',
-    letterSpacing: 1,
-    fontWeight: '600',
+  arrowButton: {
+    padding: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   statsContainer: {
     flexDirection: 'row',
