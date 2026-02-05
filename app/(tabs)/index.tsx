@@ -1,8 +1,9 @@
 import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/lib/supabase';
+import { getCurrentBookClubBook } from '@/lib/database';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useEffect, useState, useCallback } from 'react';
 import { ActivityIndicator, Image, Modal, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import '../global.css';
 
@@ -10,6 +11,8 @@ export default function HomeScreen() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [currentBook, setCurrentBook] = useState<any>(null);
+  const [loadingBook, setLoadingBook] = useState(true);
   const { theme, isDark, toggleTheme } = useTheme();
 
   useEffect(() => {
@@ -22,6 +25,38 @@ export default function HomeScreen() {
     
     getUser();
   }, []);
+
+  // Refresh current book when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      loadCurrentBook();
+    }, [])
+  );
+
+  const loadCurrentBook = async () => {
+    setLoadingBook(true);
+    try {
+      const currentBookData = await getCurrentBookClubBook();
+      if (currentBookData && currentBookData.book) {
+        setCurrentBook({
+          id: currentBookData.book.id,
+          title: currentBookData.book.title,
+          author: currentBookData.book.author || 'Unknown Author',
+          year: currentBookData.book.year || '',
+          cover: currentBookData.book.cover_url || 'https://via.placeholder.com/300x450?text=No+Cover',
+          synopsis: currentBookData.book.synopsis || 'No description available.',
+          rating: '0.0',
+        });
+      } else {
+        setCurrentBook(null);
+      }
+    } catch (error) {
+      console.error('Error loading current book:', error);
+      setCurrentBook(null);
+    } finally {
+      setLoadingBook(false);
+    }
+  };
 
   const handleSignOut = async () => {
     setMenuVisible(false);
@@ -86,25 +121,82 @@ export default function HomeScreen() {
 
         {/* Current Book Section */}
         <View style={[styles.section, { backgroundColor: theme.background }]}>
-          <Text style={[styles.sectionLabel, { color: theme.secondaryText }]}>CURRENT BOOK</Text>
+          <Text style={[styles.sectionLabel, { color: theme.secondaryText }]}>CURRENT BOOK CLUB BOOK</Text>
           
-          <View style={[styles.featuredCard, { backgroundColor: theme.cardBackground, borderColor: theme.border }]}>
-            <View style={styles.currentBookContent}>
-              <View style={styles.currentBookText}>
-                <Text style={[styles.featuredTitle, { color: theme.primaryText }]}>Life Of The Wild</Text>
-                <Text style={[styles.featuredAuthor, { color: theme.secondaryText }]}>by Samuel Handy</Text>
-              </View>
-              <TouchableOpacity style={styles.arrowButton}>
-                <FontAwesome name="chevron-right" size={16} color={theme.accent} />
-              </TouchableOpacity>
+          {loadingBook ? (
+            <View style={[styles.featuredCard, { backgroundColor: theme.cardBackground, borderColor: theme.border, alignItems: 'center', justifyContent: 'center', minHeight: 140 }]}>
+              <ActivityIndicator size="large" color={theme.accent} />
             </View>
+          ) : currentBook ? (
+            <TouchableOpacity 
+              style={[styles.featuredCard, { backgroundColor: theme.cardBackground, borderColor: theme.border }]}
+              onPress={() => {
+                router.push({
+                  pathname: '/book-details',
+                  params: {
+                    id: currentBook.id,
+                    title: currentBook.title,
+                    author: currentBook.author,
+                    year: currentBook.year,
+                    cover: currentBook.cover,
+                    synopsis: currentBook.synopsis,
+                    rating: currentBook.rating,
+                  }
+                });
+              }}
+              activeOpacity={0.7}
+            >
+              <View style={styles.currentBookContent}>
+                <Image 
+                  source={{ uri: currentBook.cover }}
+                  style={styles.currentBookCover}
+                  resizeMode="cover"
+                />
+                <View style={styles.currentBookText}>
+                  <Text style={[styles.featuredTitle, { color: theme.primaryText }]}>{currentBook.title}</Text>
+                  <Text style={[styles.featuredAuthor, { color: theme.secondaryText }]}>by {currentBook.author}</Text>
+                  <View style={styles.currentBookBadge}>
+                    <Text style={[styles.currentBookBadgeText, { color: theme.accent }]}>Current Book Club Book</Text>
+                  </View>
+                </View>
+                <View style={styles.arrowButton}>
+                  <FontAwesome name="chevron-right" size={20} color={theme.accent} />
+                </View>
+              </View>
+            </TouchableOpacity>
+          ) : (
+            <View style={[styles.featuredCard, { backgroundColor: theme.cardBackground, borderColor: theme.border }]}>
+              <View style={styles.emptyCurrentBook}>
+                <FontAwesome name="book" size={32} color={theme.secondaryText} />
+                <Text style={[styles.emptyCurrentBookText, { color: theme.secondaryText }]}>
+                  No current book club book set
+                </Text>
+                <Text style={[styles.emptyCurrentBookSubtext, { color: theme.secondaryText }]}>
+                  Mark a book as the current book club book to see it here
+                </Text>
+              </View>
+            </View>
+          )}
+        </View>
+
+        {/* Quote of the Day Section */}
+        <View style={[styles.section, { backgroundColor: theme.background }]}> 
+          <View style={[styles.communityCard, styles.quoteCard, { backgroundColor: theme.accent }]}> 
+            <Text style={[styles.communityTitle, { color: theme.cardBackground }]}>Quote of the Day</Text>
+            <Text style={[styles.communityDescription, { color: theme.tertiaryText }]}> 
+              "It is only with the heart that one can see rightly; what is essential is invisible to the eye."
+            </Text>
+            <Text style={{ color: theme.cardBackground, fontWeight: '600', marginBottom: 8 }}>
+              — The Little Prince
+            </Text>
+            <Text style={{ color: theme.cardBackground, fontStyle: 'italic', fontSize: 12 }}>
+              Antoine de Saint-Exupéry
+            </Text>
           </View>
         </View>
 
         {/* Quick Stats */}
-        <View style={[styles.section, { backgroundColor: theme.background }]}>
-          <Text style={[styles.sectionLabel, { color: theme.secondaryText }]}>YOUR STATS</Text>
-          
+        <View style={[styles.section, styles.statsSection, { backgroundColor: theme.background }]}>   
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
               <Text style={[styles.statNumber, { color: theme.primaryText }]}>12</Text>
@@ -138,35 +230,27 @@ export default function HomeScreen() {
           </View>
         </View>
 
-          {/* Book Club Section removed for now. Styling preserved below for later reuse. */}
-          {/*
-          <View style={[styles.section, { backgroundColor: theme.background }]}>
-            <View style={[styles.communityCard, { backgroundColor: theme.accent }]}>
-              <Text style={[styles.communityTitle, { color: theme.cardBackground }]}>Join Our Community</Text>
-              <Text style={[styles.communityDescription, { color: theme.tertiaryText }]}>
-                Connect with fellow readers, share reviews, and discover your next favorite book together.
-              </Text>
-              <TouchableOpacity style={[styles.communityButton, { backgroundColor: theme.cardBackground }]}>
-                <Text style={[styles.communityButtonText, { color: theme.accentDark }]}>GET STARTED</Text>
-              </TouchableOpacity>
+        {/* Book Club Suggestions Section */}
+        <View style={[styles.section, { backgroundColor: theme.background }]}>
+          <View style={[styles.bookClubCard, { backgroundColor: theme.accent }]}>
+            <View style={styles.bookClubHeader}>
+              <FontAwesome name="users" size={24} color={theme.cardBackground} />
+              <Text style={[styles.bookClubTitle, { color: theme.cardBackground }]}>Book Club Suggestions</Text>
             </View>
-          </View>
-          */}
-        {/* Quote of the Day Section */}
-        <View style={[styles.section, { backgroundColor: theme.background }]}> 
-          <View style={[styles.communityCard, { backgroundColor: theme.accent }]}> 
-            <Text style={[styles.communityTitle, { color: theme.cardBackground }]}>Quote of the Day</Text>
-            <Text style={[styles.communityDescription, { color: theme.tertiaryText }]}> 
-              "It is only with the heart that one can see rightly; what is essential is invisible to the eye."
+            <Text style={[styles.bookClubDescription, { color: theme.tertiaryText }]}>
+              Discover books suggested by your book club members and vote on what to read next together.
             </Text>
-            <Text style={{ color: theme.cardBackground, fontWeight: '600', marginBottom: 8 }}>
-              — The Little Prince
-            </Text>
-            <Text style={{ color: theme.cardBackground, fontStyle: 'italic', fontSize: 12 }}>
-              Antoine de Saint-Exupéry
-            </Text>
+            <TouchableOpacity 
+              style={[styles.bookClubButton, { backgroundColor: theme.cardBackground }]}
+              onPress={() => {
+                router.push('/book-club-suggestions');
+              }}
+            >
+              <Text style={[styles.bookClubButtonText, { color: theme.accentDark }]}>VIEW SUGGESTIONS</Text>
+            </TouchableOpacity>
           </View>
         </View>
+
       </ScrollView>
 
       {/* Profile Menu Modal */}
@@ -309,35 +393,78 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   featuredCard: {
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    padding: 24,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 6,
     borderWidth: 1,
   },
   currentBookContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minHeight: 140,
   },
   currentBookText: {
     flex: 1,
+    marginLeft: 20,
     marginRight: 12,
+    justifyContent: 'center',
   },
   featuredTitle: {
-    fontSize: 28,
+    fontSize: 32,
     fontFamily: 'Georgia',
     color: '#5C4A3D',
+    marginBottom: 6,
+    fontWeight: '400',
+    lineHeight: 38,
+  },
+  featuredAuthor: {
+    fontSize: 16,
+    color: '#8B7355',
+    fontWeight: '400',
+    marginBottom: 12,
+  },
+  currentBookBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: 'rgba(139, 115, 85, 0.1)',
+  },
+  currentBookBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  emptyCurrentBook: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 32,
+  },
+  emptyCurrentBookText: {
+    fontSize: 16,
+    fontFamily: 'Georgia',
+    marginTop: 12,
     marginBottom: 4,
     fontWeight: '400',
   },
-  featuredAuthor: {
-    fontSize: 14,
-    color: '#8B7355',
-    fontWeight: '400',
+  emptyCurrentBookSubtext: {
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  currentBookCover: {
+    width: 100,
+    height: 140,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
   arrowButton: {
     padding: 8,
@@ -397,6 +524,12 @@ const styles = StyleSheet.create({
     padding: 24,
     marginBottom: 32,
   },
+  quoteCard: {
+    marginBottom: 0,
+  },
+  statsSection: {
+    marginTop: 24,
+  },
   communityTitle: {
     fontSize: 24,
     fontFamily: 'Georgia',
@@ -419,6 +552,38 @@ const styles = StyleSheet.create({
   communityButtonText: {
     fontSize: 10,
     color: '#5C4A3D',
+    letterSpacing: 1,
+    fontWeight: '600',
+  },
+  bookClubCard: {
+    borderRadius: 16,
+    padding: 24,
+    marginBottom: 0,
+  },
+  bookClubHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 12,
+  },
+  bookClubTitle: {
+    fontSize: 22,
+    fontFamily: 'Georgia',
+    fontWeight: '400',
+  },
+  bookClubDescription: {
+    fontSize: 14,
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  bookClubButton: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  bookClubButtonText: {
+    fontSize: 10,
     letterSpacing: 1,
     fontWeight: '600',
   },
